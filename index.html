@@ -719,16 +719,22 @@
             const notes = [262, 294, 330, 349, 392, 440, 494, 523]; // Dó, Ré, Mi, Fá, Sol, Lá, Si, Dó
             let noteIndex = 0;
             let sampleIndex = 0;
-            const noteDuration = audioContext.sampleRate * 0.5; // 0.5 segundos por nota
+            const noteDuration = audioContext.sampleRate * 0.8; // 0.8 segundos por nota
             
             while (sampleIndex < bufferLength) {
                 const freq = notes[noteIndex % notes.length];
                 const samplesInNote = Math.min(noteDuration, bufferLength - sampleIndex);
                 
                 for (let i = 0; i < samplesInNote; i++) {
-                    const t = (sampleIndex + i) / audioContext.sampleRate;
-                    const envelope = Math.exp(-t * 0.5); // Fade out suave
-                    data[sampleIndex + i] = Math.sin(2 * Math.PI * freq * t) * 0.15 * envelope;
+                    const t = i / audioContext.sampleRate;
+                    // Envelope ADSR simples
+                    let envelope = 1;
+                    if (t < 0.05) {
+                        envelope = t / 0.05; // Attack
+                    } else if (t > samplesInNote / audioContext.sampleRate - 0.1) {
+                        envelope = Math.max(0, (samplesInNote / audioContext.sampleRate - t) / 0.1); // Release
+                    }
+                    data[sampleIndex + i] = Math.sin(2 * Math.PI * freq * t) * 0.2 * envelope;
                 }
                 
                 sampleIndex += samplesInNote;
@@ -746,7 +752,7 @@
                 const gainNode = audioContext.createGain();
                 
                 source.buffer = buffer;
-                gainNode.gain.value = 0.3; // Volume mais baixo para não atrapalhar
+                gainNode.gain.value = 0.5; // Volume moderado
                 
                 source.connect(gainNode);
                 gainNode.connect(audioContext.destination);
