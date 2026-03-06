@@ -744,23 +744,30 @@
             return buffer;
         }
         
+        let backgroundMusicSource = null;
+        let backgroundAudioContext = null;
+        
         function playBackgroundMusic() {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (backgroundMusicSource) {
+                    backgroundMusicSource.stop();
+                }
+                
+                backgroundAudioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const buffer = generateBackgroundMusic();
-                const source = audioContext.createBufferSource();
-                const gainNode = audioContext.createGain();
+                backgroundMusicSource = backgroundAudioContext.createBufferSource();
+                const gainNode = backgroundAudioContext.createGain();
                 
-                source.buffer = buffer;
-                gainNode.gain.value = 0.5; // Volume moderado
+                backgroundMusicSource.buffer = buffer;
+                gainNode.gain.value = 0.4; // Volume moderado
                 
-                source.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+                backgroundMusicSource.connect(gainNode);
+                gainNode.connect(backgroundAudioContext.destination);
                 
-                source.loop = true;
-                source.start(0);
+                backgroundMusicSource.loop = true;
+                backgroundMusicSource.start(0);
             } catch (e) {
-                console.log('Música de fundo não disponível');
+                console.log('Música de fundo não disponível:', e);
             }
         }
         
@@ -815,6 +822,16 @@
             });
         }
 
+        let musicStarted = false;
+        
+        function startMusicOnFirstInteraction() {
+            if (!musicStarted) {
+                playBackgroundMusic();
+                musicStarted = true;
+                document.removeEventListener('click', startMusicOnFirstInteraction);
+            }
+        }
+        
         speakButton.addEventListener('click', speakWord);
         checkButton.addEventListener('click', checkAnswer);
         clearButton.addEventListener('click', clearAnswer);
@@ -824,8 +841,8 @@
         // Inicializar o jogo
         resetGame();
         
-        // Iniciar música de fundo
-        playBackgroundMusic();
+        // Iniciar música de fundo no primeiro clique
+        document.addEventListener('click', startMusicOnFirstInteraction);
     </script>
 </body>
 </html>
