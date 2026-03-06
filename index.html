@@ -708,40 +708,49 @@
             createOptions();
         }
 
-        // Gerar música de fundo proceduralmente
+        // Gerar música de fundo proceduralmente - versão simplificada
         function generateBackgroundMusic() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const bufferLength = audioContext.sampleRate * 30; // 30 segundos
-            const buffer = audioContext.createBuffer(1, bufferLength, audioContext.sampleRate);
-            const data = buffer.getChannelData(0);
-            
-            // Sequência de notas alegres (escala maior)
-            const notes = [262, 294, 330, 349, 392, 440, 494, 523]; // Dó, Ré, Mi, Fá, Sol, Lá, Si, Dó
-            let noteIndex = 0;
-            let sampleIndex = 0;
-            const noteDuration = audioContext.sampleRate * 0.8; // 0.8 segundos por nota
-            
-            while (sampleIndex < bufferLength) {
-                const freq = notes[noteIndex % notes.length];
-                const samplesInNote = Math.min(noteDuration, bufferLength - sampleIndex);
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const sampleRate = audioContext.sampleRate;
+                const duration = 60; // 60 segundos
+                const bufferLength = sampleRate * duration;
+                const buffer = audioContext.createBuffer(1, bufferLength, sampleRate);
+                const data = buffer.getChannelData(0);
                 
-                for (let i = 0; i < samplesInNote; i++) {
-                    const t = i / audioContext.sampleRate;
-                    // Envelope ADSR simples
-                    let envelope = 1;
-                    if (t < 0.05) {
-                        envelope = t / 0.05; // Attack
-                    } else if (t > samplesInNote / audioContext.sampleRate - 0.1) {
-                        envelope = Math.max(0, (samplesInNote / audioContext.sampleRate - t) / 0.1); // Release
+                // Notas em Hz (escala de Dó maior)
+                const melody = [262, 262, 262, 294, 330, 330, 330, 294, 330, 349, 392];
+                let noteIndex = 0;
+                let currentSample = 0;
+                const noteDuration = sampleRate * 0.6; // 0.6 segundos por nota
+                
+                while (currentSample < bufferLength) {
+                    const freq = melody[noteIndex % melody.length];
+                    const samplesInThisNote = Math.min(noteDuration, bufferLength - currentSample);
+                    
+                    for (let i = 0; i < samplesInThisNote; i++) {
+                        const t = i / sampleRate;
+                        const phase = 2 * Math.PI * freq * t;
+                        
+                        // Envelope simples
+                        let amp = 0.15;
+                        if (t < 0.02) amp *= t / 0.02; // Attack rápido
+                        if (t > samplesInThisNote / sampleRate - 0.05) {
+                            amp *= Math.max(0, (samplesInThisNote / sampleRate - t) / 0.05);
+                        }
+                        
+                        data[currentSample + i] = Math.sin(phase) * amp;
                     }
-                    data[sampleIndex + i] = Math.sin(2 * Math.PI * freq * t) * 0.2 * envelope;
+                    
+                    currentSample += samplesInThisNote;
+                    noteIndex++;
                 }
                 
-                sampleIndex += samplesInNote;
-                noteIndex++;
+                return buffer;
+            } catch (e) {
+                console.error('Erro ao gerar música:', e);
+                return null;
             }
-            
-            return buffer;
         }
         
         let backgroundMusicSource = null;
@@ -749,25 +758,41 @@
         
         function playBackgroundMusic() {
             try {
+                // Parar música anterior se existir
                 if (backgroundMusicSource) {
-                    backgroundMusicSource.stop();
+                    try {
+                        backgroundMusicSource.stop();
+                    } catch (e) {}
                 }
                 
+                // Criar novo contexto de áudio
                 backgroundAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Gerar buffer de música
                 const buffer = generateBackgroundMusic();
+                if (!buffer) {
+                    console.log('Não foi possível gerar buffer de música');
+                    return;
+                }
+                
+                // Criar fonte e ganho
                 backgroundMusicSource = backgroundAudioContext.createBufferSource();
                 const gainNode = backgroundAudioContext.createGain();
                 
+                // Configurar
                 backgroundMusicSource.buffer = buffer;
-                gainNode.gain.value = 0.4; // Volume moderado
+                backgroundMusicSource.loop = true;
+                gainNode.gain.value = 0.35;
                 
+                // Conectar
                 backgroundMusicSource.connect(gainNode);
                 gainNode.connect(backgroundAudioContext.destination);
                 
-                backgroundMusicSource.loop = true;
+                // Iniciar
                 backgroundMusicSource.start(0);
+                console.log('Música de fundo iniciada');
             } catch (e) {
-                console.log('Música de fundo não disponível:', e);
+                console.error('Erro ao iniciar música de fundo:', e);
             }
         }
         
