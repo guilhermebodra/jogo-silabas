@@ -624,10 +624,12 @@
             selectedSyllables = [];
             feedback.textContent = '';
             checkButton.style.display = 'inline-block';
+            clearButton.style.display = 'inline-block';
             nextButton.style.display = 'none';
             answerContainer.innerHTML = '';
             
             // Atualizar imagem do animal
+            animalImage.innerHTML = '';
             animalImage.textContent = themeData.emoji;
             
             // Falar o nome do animal automaticamente
@@ -896,6 +898,11 @@
                 } catch (e) {}
             } else if (soundEnabled && musicStarted && !backgroundMusicSource) {
                 playBackgroundMusic();
+            }
+            
+            // Se ativou som e está em uma pergunta, falar a palavra
+            if (soundEnabled && currentTheme && gameScreen.classList.contains('active')) {
+                setTimeout(() => speakWord(), 200);
             }
         }
 
