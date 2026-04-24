@@ -527,7 +527,7 @@
                 emoji: '🚀',
                 name: 'Espaço',
                 words: [
-                    { word: 'FOGUETE', emoji: '🚀', syllables: ['FO', 'GU', 'TE'], extras: ['BO', 'DU', 'DE'] },
+                    { word: 'FOGUETE', emoji: '🚀', syllables: ['FO', 'GUE', 'TE'], extras: ['BO', 'DUE', 'DE'] },
                     { word: 'ESTRELA', emoji: '⭐', syllables: ['ES', 'TRE', 'LA'], extras: ['AS', 'BRE', 'MA'] },
                     { word: 'LUA', emoji: '🌙', syllables: ['LU', 'A'], extras: ['DU', 'I', 'E'] },
                     { word: 'SOL', emoji: '☀️', syllables: ['SOL'], extras: ['BOL', 'TOL', 'MOL'] },
@@ -753,13 +753,24 @@
         // Falar palavra
         function speakWord() {
             if (!soundEnabled) return;
-            const themeData = themes[currentTheme];
-            const currentWord = themeData.words[currentWordIndex];
             
-            const utterance = new SpeechSynthesisUtterance(currentWord.word);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 0.8;
-            speechSynthesis.speak(utterance);
+            try {
+                // Cancelar qualquer fala anterior
+                speechSynthesis.cancel();
+                
+                const themeData = themes[currentTheme];
+                const currentWord = themeData.words[currentWordIndex];
+                
+                const utterance = new SpeechSynthesisUtterance(currentWord.word);
+                utterance.lang = 'pt-BR';
+                utterance.rate = 0.8;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                
+                speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.error('Erro ao falar palavra:', e);
+            }
         }
 
         // Gerar música de fundo
