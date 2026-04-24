@@ -354,10 +354,24 @@
         .button-group {
             display: flex;
             gap: 6px;
-            justify-content: center;
+            justify-content: space-between;
             flex-wrap: wrap;
             min-height: 45px;
             align-items: center;
+        }
+        
+        .button-group .verify-button {
+            order: 2;
+            margin-left: auto;
+        }
+        
+        .button-group .clear-button {
+            order: 1;
+        }
+        
+        .button-group .next-button {
+            order: 2;
+            margin-left: auto;
         }
 
         .action-button {
@@ -612,6 +626,14 @@
             checkButton.style.display = 'inline-block';
             nextButton.style.display = 'none';
             answerContainer.innerHTML = '';
+            
+            // Atualizar imagem do animal
+            animalImage.textContent = themeData.emoji;
+            
+            // Falar o nome do animal automaticamente
+            if (soundEnabled) {
+                setTimeout(() => speakWord(), 300);
+            }
             
             // Embaralhar sílabas
             const allSyllables = [...currentWord.syllables, ...currentWord.extras];
